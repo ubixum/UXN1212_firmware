@@ -1,0 +1,17 @@
+This is the firmware for the UXN2030 FPGA Data Acquisition Board
+
+http://ubixum.com/category/data-acquisition-boards/
+
+Dependencies:
+    FX2lib: Submodule.  Use git submodule update --init to make sure it's up
+        to date.
+    SDCC: http://sdcc.sf.net
+    Nitrogen Data Acquisition Drivers: 
+        http://ubixum.com/nitrogen-data-acquisition
+
+Building:
+    Run 'make' to build firmware.ihx.
+    Run 'make iic' to build firmware.iic, which can be stored on the the
+        baseboard eeprom.
+ 
+

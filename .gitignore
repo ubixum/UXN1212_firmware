@@ -1,0 +1,15 @@
+*.asm
+*.lst
+*.rel
+*.sym
+*.bix
+*.ihx
+*.lnk
+*.lst
+*.map
+*.mem
+*.rst
+*.adb
+*.cdb
+*.hex
+*.iic
