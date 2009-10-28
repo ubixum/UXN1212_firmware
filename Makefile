@@ -1,4 +1,4 @@
-FX2LIB = ../lib/fx2lib
+FX2LIB = lib/fx2lib
 INCLUDES = -I$(FX2LIB)/include
 LIBS = fx2.lib -L$(FX2LIB)/lib
 VID=0x1fe1
