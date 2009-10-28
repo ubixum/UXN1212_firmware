@@ -33,9 +33,7 @@ SOURCES = firmware.c \
 		  main.c \
 		  handlers.c \
 		  fx2term.c \
-		  spi.c \
 		  eeprom.c \
-		  bitfile.c
 
 OBJS = $(patsubst %.c,%.rel, $(SOURCES)) dscr.rel 
 
