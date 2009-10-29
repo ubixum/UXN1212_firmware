@@ -2,7 +2,7 @@ FX2LIB = lib/fx2lib
 INCLUDES = -I$(FX2LIB)/include
 LIBS = fx2.lib -L$(FX2LIB)/lib
 VID=0x1fe1
-PID=0x4830
+PID=0x1212
 
 # possible env flags
 # -D DEBUG_FIRMWARE - enable stdio & printf on sio-0 (57600 buad)
@@ -70,3 +70,6 @@ iic: $(BASENAME).iic
 
 UXN1212_di.xml: UXN1212_di.py
 	python -c "from nitro import XmlWriter; import UXN1212_di; x=XmlWriter('UXN1212_di.xml'); x.write(UXN1212_di.di)"
+
+load: $(BASENAME).ihx
+	nitro -R firmware.ihx -V $(VID) -P $(PID)
