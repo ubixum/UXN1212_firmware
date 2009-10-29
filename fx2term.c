@@ -23,29 +23,6 @@
 
 extern code WORD dev_dscr; // the device descriptor.
 
-void boot_fpga() {
-
- // program from spi 
- OEA = 0x08;
- IOA = 0x04; 
- GPIFIDLECTL = 1;
-// PINFLAGSAB=0xbf; SYNCDELAY();
-// PINFLAGSCD=0xbb; SYNCDELAY();
- delay(1);
- PA3=1; // prog_b high
-
- delay(250);
- if (!PA1) {
-    // fpga didn't program 
-    // hold in reset
-    PA3=0;
- }
- 
- GPIFIDLECTL = 4;
-
-}
-
-
 void get_fx2(WORD len) {
     printf ( "get_fx2, len: %d\n" , len );
     if ( len == 2 ) {
@@ -117,22 +94,13 @@ BOOL set_fx2() {
     if (rdwr_data.bytes_avail == 2) {
         switch (rdwr_data.h.term_addr) {
             case TERM_FX2:
-                switch ( rdwr_data.h.reg_addr ) {
-                     case REG_FX2_BOOTFPGA:
-                         if (1==val) boot_fpga();
-                         break;
-                     default:
-                         // WARNING setting 0xe601 (IFCONFIG) has caused me issues here.
-                         // some registers don't set! 
-                         // (either that or they are getting reset before I can read them again.
-                         if (rdwr_data.h.reg_addr >= 0xe600 && rdwr_data.h.reg_addr <= 0xfdff ) {
-                             WORD reg_addr = rdwr_data.h.reg_addr; // cast 31 bit to 16
-                             xdata BYTE *a = *((xdata BYTE**)&rdwr_data.h.reg_addr);
-                             printf ( "Set %04x a: %04x *a: %02x\n " , (WORD)rdwr_data.h.reg_addr, (WORD)a, *a );
-                             *a = val;
-                         }
-                         break;
-                 }
+                if (rdwr_data.h.reg_addr >= 0xe600 && rdwr_data.h.reg_addr <= 0xfdff ) {
+                    WORD reg_addr = rdwr_data.h.reg_addr; // cast 31 bit to 16
+                    xdata BYTE *a = *((xdata BYTE**)&rdwr_data.h.reg_addr);
+                    printf ( "Set %04x a: %04x *a: %02x\n " , (WORD)rdwr_data.h.reg_addr, (WORD)a, *a );
+                    *a = val;
+                }
+                break;
             case TERM_FX2_IO:
                 switch ( rdwr_data.h.reg_addr ) {
                      case REG_FX2_IOA:

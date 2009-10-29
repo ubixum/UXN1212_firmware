@@ -18,76 +18,9 @@
 from nitro import DeviceInterface, Terminal, Register, SubReg
 
 di=DeviceInterface(
-    name="fx2 devices",
+    name="UXN1212 devices",
     terminal_list=[ 
 
-        ########################################################################
-        Terminal(
-            name='FPGA_bitfile',
-            addr=0x02,
-            regAddrWidth=16,
-            regDataWidth=16,
-            comment='Termanial for writing FPGA bit file for programming the FPGA',
-            ),
-        
-        ########################################################################
-
-        Terminal(
-            name='SPI_data',
-            addr=0x03,
-            regAddrWidth=16,
-            regDataWidth=16,
-            comment="""
-                        Use this terminal to read/write data to/from the spi flash prom.
-                    """ ),
-
-        Terminal(
-            name='SPI_flash',
-            comment='SPI flash for programming FPGA from flash prom',
-            addr=0x04,
-            regAddrWidth=16,
-            regDataWidth=16,
-            register_list = [
-                Register(name='status',
-                         type='int',
-                         mode='write',
-                         addr=0x05,
-                         subregs=[
-                            SubReg(name="write_in_progress",
-                                   width=1,
-                                   comment="high while a write transaction is in progress."),
-                            SubReg(name="write_enable_latch",
-                                   width=1,
-                                   comment="high when write instructions can be accepted (set by WREN)." ),
-                            SubReg(name="block_protect",
-                                   width=3,
-                                   comment="Size of area to be software protected against writes." ),
-                            SubReg(name="unused",
-                                   width=2),
-                            SubReg(name="status_write_disable",
-                                   width=1,
-                                   comment="When W# is low, allows device to be put in write protected mode.")
-                         ]
-                ),
-                Register(name='sector',
-                         addr=0x06,
-                         width=3,
-                         mode="write",
-                         comment="SPI has 8 sectors.  Write 0-7 to this to determine which sector reads/writes start in."),
-                Register(name="spi_be",
-                         addr=0x08,
-                         mode="write",
-                         type="trigger",
-                         comment="Write 1 to this to erase the flash."),
-                Register(name="chip_id",
-                         mode="read",
-                         addr=0x9f,
-                         comment="Manufacturer Identification"),
-
-
-            ]
-     ),
-     #######################################################################
         Terminal(
             name='FX2',
             comment='Special FX2 functions.  This terminal also gets and sets memory data in the FX2 e600-fdff range.  (Note this does not work with reads, only get/set)', 
@@ -105,14 +38,7 @@ di=DeviceInterface(
                                     SubReg ( name="major",
                                         width=8,
                                         comment="FX2 firmware major version." )
-                                  ]),
-                Register(name="boot_fpga",
-                         type="trigger",
-                         mode="write",
-                         addr=5,
-                         width=1,
-                         comment="write 1 to this register to cause the fpga to boot from it's prom.")]
-
+                                  ])]
         ),
 
         Terminal(

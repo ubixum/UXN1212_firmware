@@ -319,9 +319,6 @@ void main_init() {
  GPIFIDLECTL = 0;
  PORTACFG = 0; // make sure PA7 does not output a FLAGD state (we always want it to be in input during slave fifo)
 
- // FIX
- boot_fpga();
-
  // interrupts
  ENABLE_SUTOK(); 
 

@@ -68,5 +68,5 @@ bix: $(BASENAME).bix
 
 iic: $(BASENAME).iic
 
-fx2_di.xml: fx2_di.py
-	python -c "from nitro import XmlWriter; import fx2_di; x=XmlWriter('fx2_di.xml'); x.write(fx2_di.di)"
+UXN1212_di.xml: UXN1212_di.py
+	python -c "from nitro import XmlWriter; import UXN1212_di; x=XmlWriter('UXN1212_di.xml'); x.write(UXN1212_di.di)"
