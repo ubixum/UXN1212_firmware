@@ -27,26 +27,14 @@
 volatile bit dorenum=FALSE;
 
 
+
 extern code WORD str_serial;
 
 xdata rdwr_data_t rdwr_data;
 
-volatile bit is_fpga_trans; // quick test so that main loop doesn't have to switch the terminals
-
-typedef struct {
-    BYTE cmd;
-    BYTE control;
-    WORD term;
-    DWORD reg;
-    DWORD length;
-    WORD reserved;
-    WORD ack;
-} fpga_control_cmd;
-
-xdata fpga_control_cmd next_fpga_command;
-
 
 volatile xdata WORD in_packet_max = 64; // max size for full speed usb (the default before hi-speed interrupt)
+xdata BYTE i2c_addr_buf[2]; // for reading/writing to the eeprom
 
 
 void reset_endpoints() {
@@ -149,21 +137,12 @@ BOOL handleRDWR () {
     memcpy ( &rdwr_data, EP0BUF, sizeof(rdwr_data_header) );
     rdwr_data.in_progress=TRUE;
    
-    // NOTE fix
-    //i2c_term = LSB(rdwr_data.term_addr); // if not i2c transaction, ignored
-
     EP2FIFOCFG =0 ; // don't autoout write data for anything but fpga
 
     reset_endpoints(); // clear any old data
 
-    is_fpga_trans = 0;
-    
-    // NOTE fix
-    // perhaps a status function?
-    //status_ptr = &default_status;
-
     while (TRUE) {
-      if (io_handlers[cur].term_addr == 0) { is_fpga_trans = TRUE; break; }
+      if (io_handlers[cur].term_addr == 0) { return FALSE; }
       if (io_handlers[cur].term_addr == rdwr_data.h.term_addr) {
         printf ( "Found handlers for %d\n" , rdwr_data.h.term_addr );
         cur_read_handler = io_handlers[cur].read_handler; 
@@ -175,41 +154,7 @@ BOOL handleRDWR () {
       } 
       ++cur;
     }
-
-    if (is_fpga_trans) {
-        printf ( "Initializing FPGA transaction for terminal %d\n", rdwr_data.h.term_addr );
-        if (!PA1) return FALSE;
-        IFCONFIG |= 3;
-        // other outputs [7:4] are disabled anyway when switch to slave fifo mode
-        // go back to slave fifo mode
-        EP2FIFOCFG |= bmWORDWIDE; //|bmOEP; 
-        PINFLAGSCD=0x0b; // flagc=0 during trans
-
-        memset ( &next_fpga_command , 0, sizeof(next_fpga_command ) ); 
-        next_fpga_command.control = 0xc3; // fpga command
-        next_fpga_command.cmd = (rdwr_data.h.command & bmSETWRITE) ? 2 : 1;  // 1==READ, 2=WRITE
-        next_fpga_command.term = rdwr_data.h.term_addr;
-        next_fpga_command.reg = rdwr_data.h.reg_addr;
-        next_fpga_command.length = rdwr_data.h.transfer_length;           
-        next_fpga_command.ack = 0xaa55;
-
-        FIFORESET = 0x80; SYNCDELAY();
-        FIFORESET = 0x02; SYNCDELAY(); // put ep2 buffers in cpu domain
-        memcpy ( EP2FIFOBUF, (void*)&next_fpga_command, sizeof(next_fpga_command) );
-
-        SYNCDELAY();
-        EP2BCH = 0;
-        SYNCDELAY();
-        EP2BCL = sizeof(next_fpga_command); SYNCDELAY();
-
-        // skip some packets
-        OUTPKTEND=0x82; SYNCDELAY();
-        OUTPKTEND=0x82; SYNCDELAY();
-        OUTPKTEND=0x82; SYNCDELAY();
-        FIFORESET = 0; SYNCDELAY();
-
-        EP2FIFOCFG |= bmAUTOOUT; // next packets come from pc 
-    } else if (cur_init_handler) {
+    if (cur_init_handler) {
         cur_init_handler();
     }
      
@@ -239,31 +184,31 @@ BOOL handle_serial () {
 
     switch ( SETUP_TYPE ) {
 
-//        case 0x40:
-//            EP0BCL=0; // allow transfer in.
-//            while ((EP0CS & bmEPBUSY) && !new_vc_cmd ); // make sure the data came in ok.
-//            if (new_vc_cmd) return FALSE;
-//                
-//            buf[1]=0;
-//            for (c=0;c<8;++c) {
-//                i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET+c*2);
-//                i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET+c*2);
-//                buf[0] = EP0BUF[c];
-//                i2c_write ( TERM_FX2PROM, 2, i2c_addr_buf, 2, buf); 
-//            }
-//            return TRUE;
-//       case 0xc0:
-//            while ((EP0CS & bmEPBUSY) && !new_vc_cmd); 
-//            if (new_vc_cmd) return FALSE;
-//            for (c=0;c<8;++c) {
-//                i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET+c*2);
-//                i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET+c*2);
-//                i2c_write ( TERM_FX2PROM, 2, i2c_addr_buf, 0, NULL );
-//                i2c_read ( TERM_FX2PROM, 1, EP0BUF+c );
-//            }
-//            EP0BCH=0; SYNCDELAY();
-//            EP0BCL=8;
-//            return TRUE;
+        case 0x40:
+            EP0BCL=0; // allow transfer in.
+            while ((EP0CS & bmEPBUSY) && !new_vc_cmd ); // make sure the data came in ok.
+            if (new_vc_cmd) return FALSE;
+                
+            buf[1]=0;
+            for (c=0;c<8;++c) {
+                i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET+c*2);
+                i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET+c*2);
+                buf[0] = EP0BUF[c];
+                i2c_write ( TERM_FX2PROM, 2, i2c_addr_buf, 2, buf); 
+            }
+            return TRUE;
+       case 0xc0:
+            while ((EP0CS & bmEPBUSY) && !new_vc_cmd); 
+            if (new_vc_cmd) return FALSE;
+            for (c=0;c<8;++c) {
+                i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET+c*2);
+                i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET+c*2);
+                i2c_write ( TERM_FX2PROM, 2, i2c_addr_buf, 0, NULL );
+                i2c_read ( TERM_FX2PROM, 1, EP0BUF+c );
+            }
+            EP0BCH=0; SYNCDELAY();
+            EP0BCL=8;
+            return TRUE;
         default:
             return FALSE;
     }
@@ -304,8 +249,6 @@ BOOL handle_vendorcommand(BYTE cmd) {
 
 
 void main_init() {
- BYTE c;
- BYTE addr;
 
  CPUCS &= ~bmCLKOE; // don't drive clkout;
  REVCTL=3;
@@ -323,11 +266,10 @@ void main_init() {
  ENABLE_SUTOK(); 
 
  // initialize the device serial number
- // NOTE fix
-// i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET);
-// i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET);
-// i2c_write( TERM_FX2PROM, 2, i2c_addr_buf, 0, NULL );
-// i2c_read ( TERM_FX2PROM, 16, (xdata BYTE*)&str_serial + 2 ); 
+ i2c_addr_buf[0] = MSB(PROM_SERIAL_OFFSET);
+ i2c_addr_buf[1] = LSB(PROM_SERIAL_OFFSET);
+ i2c_write( TERM_FX2PROM, 2, i2c_addr_buf, 0, NULL );
+ i2c_read ( TERM_FX2PROM, 16, (xdata BYTE*)&str_serial + 2 ); 
 
  // other endpoints not valid
  EP1OUTCFG &= ~bmVALID;
@@ -344,21 +286,6 @@ void main_init() {
  EP6AUTOINLENH=MSB(in_packet_max); SYNCDELAY();
  EP6AUTOINLENL=LSB(in_packet_max); SYNCDELAY();
 
- // DECIS=0 (fire when level is >= setting (active low))
- // PKTSTAT=0 (pkts + current bytes)
- // PKTS = 3
- // current bytes = 508 // 4 byte buffer
- // 0x19, 0xfc = 508
- // 0x18, 0x00 = 3 buffers no bytes
- EP6FIFOPFH = 0x18; SYNCDELAY(); 
- EP6FIFOPFL = 0x0; SYNCDELAY(); // 508=0x1fc 
- //EP6FIFOPFH = 0x19; SYNCDELAY();
- //EP6FIFOPFL = 0xfc; SYNCDELAY();
-
- FIFOPINPOLAR = 0; // everything active low.
- PINFLAGSAB = 0x68; SYNCDELAY(); // flagb = ep6 PF flaga = ep2 ef
- PINFLAGSCD = 0x0B; SYNCDELAY(); // flagc = ep8 EF (this is to make sure flagc doesn't assert during normal operation since we aren't using ep8)
- 
  printf ( "Initialization Done.\n" );
 
 }
@@ -387,7 +314,7 @@ void main_loop() {
  WORD status=0;
 
  // data to read from a terminal?
- if ( rdwr_data.in_progress && !(rdwr_data.h.command & bmSETWRITE) && !rdwr_data.aborted &&!is_fpga_trans) {
+ if ( rdwr_data.in_progress && !(rdwr_data.h.command & bmSETWRITE) && !rdwr_data.aborted) {
     xdata DWORD readlen = rdwr_data.h.transfer_length - rdwr_data.bytes_read;
     xdata WORD this_read = readlen > in_packet_max ? in_packet_max : readlen;
     printf ("do a read.\n" );
@@ -405,8 +332,6 @@ void main_loop() {
     if ( rdwr_data.bytes_read >= rdwr_data.h.transfer_length && !(EP2468STAT & bmEP6FULL)) {
         printf ( "Finished Read.\n" );
         rdwr_data.in_progress = FALSE;
-        PA2=1; // chip select should be high (set low for programming spi flash)
-        OEA=8;
         send_ack_packet();
     }
 
@@ -414,7 +339,7 @@ void main_loop() {
  
  // received data to write to a terminal
  
- if (!(EP2468STAT & bmEP2EMPTY) && !is_fpga_trans) {
+ if (!(EP2468STAT & bmEP2EMPTY)) {
 
      if ( !(rdwr_data.h.command & bmSETWRITE) || rdwr_data.aborted || !rdwr_data.in_progress ) {
         OUTPKTEND = 0x82;
@@ -430,8 +355,6 @@ void main_loop() {
         if ( rdwr_data.bytes_written  >= rdwr_data.h.transfer_length || rdwr_data.aborted ) {
             rdwr_data.in_progress = FALSE;
             send_ack_packet();
-            PA2=1;
-            OEA=8; 
         }
      }
 

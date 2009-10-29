@@ -26,28 +26,12 @@
 // Any other terminal endpoint is passed to the FPGA and must be handled
 // by the FPGA.
 
-/**
- * FPGA_bitfile has no registers.  Write a bitfile to this terminal to program the FPGA.
- **/
-#define TERM_FPGA_bitfile 2
-#define TERM_FPGA_parbit 8
-
-
-#define TERM_SPIFLASH 4
-#define REG_SPIFLASH_STATUS 5
-#define REG_SPIFLASH_SECTOR 6
-#define REG_SPIFLASH_BE 8
-#define REG_SPIFLASH_CHIPID 0x9f
-
-#define TERM_SPIFLASH_DATA 3
-
 
 /**
  * fx2 registers
  **/
 #define TERM_FX2 6
 #define REG_FX2_VERSION 4
-#define REG_FX2_BOOTFPGA 5
 
 #define TERM_FX2_IO 7
 // sfrs
