@@ -24,7 +24,7 @@ di=DeviceInterface(
         Terminal(
             name='FX2',
             comment='Special FX2 functions.  This terminal also gets and sets memory data in the FX2 e600-fdff range.  (Note this does not work with reads, only get/set)', 
-            addr=0x06,
+            addr=0x100,
             regAddrWidth=16,
             regDataWidth=16,
             register_list = [
@@ -44,7 +44,7 @@ di=DeviceInterface(
         Terminal(
             name='FX2_io',
             comment='Access to FX2 Special function registers that control general purpose IO on ports A-E', 
-            addr=0x07,
+            addr=0x101,
             regAddrWidth=16,
             regDataWidth=16,
             register_list = [

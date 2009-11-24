@@ -30,10 +30,10 @@
 /**
  * fx2 registers
  **/
-#define TERM_FX2 6
-#define REG_FX2_VERSION 4
+#define TERM_FX2 0x100 
+#define REG_FX2_VERSION 0
 
-#define TERM_FX2_IO 7
+#define TERM_FX2_IO 0x101 
 // sfrs
 #define REG_FX2_IOA 0x80
 #define REG_FX2_IOB 0x90
