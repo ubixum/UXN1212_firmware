@@ -1,6 +1,4 @@
-FX2LIB = lib/fx2lib
-INCLUDES = -I$(FX2LIB)/include
-LIBS = fx2.lib -L$(FX2LIB)/lib
+FX2LIBDIR = lib/fx2lib
 VID=0x1fe1
 PID=0x1212
 
@@ -18,14 +16,6 @@ SDCCFLAGS := $(SDCCFLAGS)
 # xram 3e00 - 200(512) = 3c00 
 ###
 
-CC = sdcc -mmcs51 \
-	$(SDCCFLAGS) \
-   --code-size 0x3c00 \
-   --xram-size 0x0200 \
-    --xram-loc 0x3c00 \
-	-Wl"-b DSCR_AREA = 0x3e00" \
-	-Wl"-b INT2JT = 0x3f00" \
-
 BASENAME = firmware
 
 SOURCES = firmware.c \
@@ -33,43 +23,8 @@ SOURCES = firmware.c \
 		  main.c \
 		  handlers.c \
 		  fx2term.c \
-		  eeprom.c \
+		  eeprom.c
+A51_SOURCES = dscr.a51 fx2_sfr.a51
 
-OBJS = $(patsubst %.c,%.rel, $(SOURCES)) dscr.rel 
+include $(FX2LIBDIR)/examples/fx2.mk
 
-.PHONY: all
-all: $(BASENAME).ihx
-
-
-%.rel: %.c
-	$(CC) -c $(INCLUDES) $?
-
-$(FX2LIB)/lib/fx2.lib:
-	make -C $(FX2LIB)/lib/
-
-$(BASENAME).ihx: $(OBJS) $(FX2LIB)/lib/fx2.lib
-	$(CC) $(OBJS) $(LIBS) -o $(BASENAME).ihx
-
-dscr.rel: dscr.a51
-	asx8051 -logs $?
-
-$(BASENAME).bix: $(BASENAME).ihx
-	objcopy -I ihex -O binary $(BASENAME).ihx $(BASENAME).bix
-
-$(BASENAME).iic: $(BASENAME).ihx
-	$(FX2LIB)/utils/ihx2iic.py -v $(VID) -p $(PID) $(BASENAME).ihx $(BASENAME).iic
-
-clean:
-	rm -f *.{asm,ihx,lnk,lst,map,mem,rel,rst,sym,adb,cdb,bix,iic}
-
-.PHONY: bix iic
-
-bix: $(BASENAME).bix
-
-iic: $(BASENAME).iic
-
-UXN1212_di.xml: UXN1212_di.py
-	python -c "from nitro import XmlWriter; import UXN1212_di; x=XmlWriter('UXN1212_di.xml'); x.write(UXN1212_di.di)"
-
-load: $(BASENAME).ihx
-	nitro -R firmware.ihx -V $(VID) -P $(PID)

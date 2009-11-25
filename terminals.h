@@ -33,18 +33,7 @@
 #define TERM_FX2 0x100 
 #define REG_FX2_VERSION 0
 
-#define TERM_FX2_IO 0x101 
-// sfrs
-#define REG_FX2_IOA 0x80
-#define REG_FX2_IOB 0x90
-#define REG_FX2_IOC 0xA0
-#define REG_FX2_IOD 0xB0
-#define REG_FX2_IOE 0xB1
-#define REG_FX2_OEA 0XB2
-#define REG_FX2_OEB 0XB3
-#define REG_FX2_OEC 0XB4
-#define REG_FX2_OED 0XB5
-#define REG_FX2_OEE 0XB6
+#define TERM_FX2_SFR 0x101 
 
 
 /**

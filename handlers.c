@@ -34,7 +34,7 @@ io_handler code io_handlers[] = {
  {TERM_DUMMY, dummy_reader, dummy_writer, 0, 0, 0}, 
 #endif
  {TERM_FX2, get_fx2, set_fx2, 0, 0, 0},
- {TERM_FX2_IO, get_fx2, set_fx2, 0, 0, 0},
+ {TERM_FX2_SFR, get_fx2_sfr, set_fx2_sfr, 0, 0, 0},
  {TERM_FX2PROM, eeprom_read_handler, eeprom_write_handler, 0, 0, 0},
  {0, 0, 0, 0, 0, 0}
 };

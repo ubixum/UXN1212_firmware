@@ -31,4 +31,14 @@ void get_fx2();
 BOOL set_fx2();
 
 
+/**
+ * Get the value from an FX2 SFR. 
+ **/
+void get_fx2_sfr();
+/**
+ * Set an FX2 SFR 
+ **/
+BOOL set_fx2_sfr();
+
+
 #endif

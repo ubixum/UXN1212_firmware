@@ -42,8 +42,8 @@ di=DeviceInterface(
         ),
 
         Terminal(
-            name='FX2_io',
-            comment='Access to FX2 Special function registers that control general purpose IO on ports A-E', 
+            name='FX2_sfr',
+            comment='Access to FX2 Special function registers.  The register address is the special function register address.', 
             addr=0x101,
             regAddrWidth=16,
             regDataWidth=16,
